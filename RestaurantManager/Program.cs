@@ -18,7 +18,28 @@ builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("sample_health_check");
 var app = builder.Build();
-app.MapHealthChecks("/healthz");
+app.MapHealthChecks("/healthz", new HealthCheckOptions
+{
+    Predicate = _ => true,
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(
+            new
+            {
+                status = report.Status.ToString(),
+                checks = report.Entries.Select(entry => new
+                {
+                    name = entry.Key,
+                    status = entry.Value.Status.ToString(),
+                    exception = entry.Value.Exception?.Message,
+                    duration = entry.Value.Duration.ToString(),
+                    description = entry.Value.Description
+                })
+            });
+        await context.Response.WriteAsync(result);
+    }
+});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
