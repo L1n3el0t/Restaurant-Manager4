@@ -16,7 +16,7 @@ builder.Services.AddDbContext<RestaurantManagerContext>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("sample_health_check");
 var app = builder.Build();
 app.MapHealthChecks("/healthz");
 
